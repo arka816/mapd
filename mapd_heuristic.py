@@ -157,4 +157,9 @@ for i in range(len(cycles)):
         index = i
         
 print("approximate makespan: ", minSpan)
-print("schedule", getSchedule(cycles[index]))
+print("optimal allocation: ")
+schedules = getSchedule(cycles[index])
+for key in sorted(schedules.keys()):
+    schedule = schedules[key]
+    schedule = [i-m for i in schedule]
+    print("Agent", key, ':', schedule)
