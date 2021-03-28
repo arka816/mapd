@@ -27,3 +27,7 @@ It is advised to provide the complete address of the task file in the terminal d
 
  - The first line inputs the dimensions of the grid, where 6 is the number of rows and 17 is the number of columns.
 - The next 6 lines contain 17 space separated integers each, providing the details of the grid where 1 signifies **normal cells**, 2 signifies **temporary storages** and 0 signifies **blocked cells** or obstacles.
+- The next line contains one integer denoting the number of robots.
+- The next 3 lines contain 4 space-separated integers each, where first two are the coordinates of the starting point and next two (0,8) are the coordinates of the ending point of each of the 3 robots.
+- The next line contains one integer, denoting number of tasks to be completed (3 in this case).
+- The next 3 lines contain 4 space-separated integers each, where first two are the coordinates of the pickup point and next two (0,8) are the coordinates of the drop-off point of each of the 3 tasks respectively.
