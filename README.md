@@ -1,2 +1,2 @@
 # mapd
-multi agent path finding and pickup and delivery
+Multi Agent Path Finding and Pickup and Delivery
