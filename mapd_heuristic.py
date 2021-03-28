@@ -5,6 +5,7 @@ INT_MIN = float('-inf')
 INT_MAX = float('inf')
 
 from task_parser import parseTask
+import sys
             
 class Cell:
     x = -1
@@ -15,7 +16,10 @@ class Cell:
         self.dist = distance
      
 #INPUTS
-M, N, grid, m, n, agentsData, taskData = parseTask()
+try:
+    M, N, grid, m, n, agentsData, taskData = parseTask(sys.argv[1])
+except:
+    M, N, grid, m, n, agentsData, taskData = parseTask()
 
 
 adjMat = [[0 for j in range(m+n)] for i in range(m+n)]

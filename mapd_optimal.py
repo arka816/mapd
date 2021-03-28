@@ -8,9 +8,13 @@ INT_MAX = float('inf')
 from astar import AStar
 from task_parser import parseTask
 from copy import deepcopy
+import sys
 
 #INPUTS
-M, N, grid, m, n, agentsData, taskData = parseTask()
+try:
+    M, N, grid, m, n, agentsData, taskData = parseTask(sys.argv[1])
+except:
+    M, N, grid, m, n, agentsData, taskData = parseTask()
 
 S = [d[0] for d in agentsData]
 E = [d[1] for d in agentsData]
