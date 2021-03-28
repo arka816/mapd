@@ -34,6 +34,10 @@ It is advised to provide the complete address of the task file in the terminal d
 - The next 3 lines contain 4 space-separated integers each, where first two are the coordinates of the pickup point and next two (0,8) are the coordinates of the drop-off point of each of the 3 tasks respectively.
 ### Format of output
 
-    ('approximate makespan: ', 26)
-    ('schedule', {0: [3], 1: [5], 2: [4]})
+    approximate makespan:  26
+    optimal allocation: 
+    Agent 0 : [0]
+    Agent 1 : [2]
+    Agent 2 : [1]
+    
   Here the output reports the approximate make-span and the optimal allocation for each of the agents as a list of tasks.
