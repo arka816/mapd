@@ -3,6 +3,8 @@
 
 INT_MIN = float('-inf')
 INT_MAX = float('inf')
+
+from task_parser import parseTask
             
 class Cell:
     x = -1
@@ -13,28 +15,8 @@ class Cell:
         self.dist = distance
      
 #INPUTS
-agentsData = [
-        [[0, 0], [0, 8]],
-        [[5, 9], [5, 5]],
-        [[0, 0], [5, 5]]
-    ]
-taskData = [
-        [[5, 0], [3, 12]],
-        [[4, 6], [0, 5]],
-        [[5, 0], [0, 5]]
-    ]
-grid = [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1],
-        [1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    ]
+M, N, grid, m, n, agentsData, taskData = parseTask()
 
-
-m, n = len(agentsData), len(taskData)
-M, N = len(grid), len(grid[0])
 
 adjMat = [[0 for j in range(m+n)] for i in range(m+n)]
 vertexType = [0 for i in range(len(agentsData))] + [1 for i in range(len(taskData))]

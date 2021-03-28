@@ -1,27 +1,16 @@
 ## MULTI AGENT PICKUP AND DELIVERY
-## OPTIMAL ALGORITHM USING STATE SPACE FORMULATION
+## OPTIMAL ALGORITHM USING
+## TASK BASED CONFLICT SEARCH
 
+INT_MIN = float('-inf')
+INT_MAX = float('inf')
+
+from astar import AStar
+from task_parser import parseTask
 from copy import deepcopy
 
 #INPUTS
-agentsData = [
-        [[0, 0], [0, 8]],
-        [[5, 9], [5, 5]],
-        [[0, 0], [5, 5]]
-    ]
-taskData = [
-        [[5, 0], [3, 12]],
-        [[4, 6], [0, 6]],
-        [[5, 0], [0, 6]]
-    ]
-grid = [
-        [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 0, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1],
-        [1, 0, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 0, 1],
-        [1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0, 1, 1, 1, 1, 1, 2],
-        [2, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    ]
+M, N, grid, m, n, agentsData, taskData = parseTask()
 
 S = [d[0] for d in agentsData]
 E = [d[1] for d in agentsData]
@@ -29,179 +18,168 @@ P = [d[0] for d in taskData]
 D = [d[1] for d in taskData]
 
 
-m, n = len(agentsData), len(taskData)
-M, N = len(grid), len(grid[0])
+cache = [[[] for j in range(M*N)] for i in range(M*N)]
 
-finalProdStat = [-2 for i in range(n)]
-visitedArrays = [[[False for j in range(N)] for i in range(M)] for k in range(m)]
+astar = AStar(deepcopy(grid))
 
-combinations = []
-def generateAgentCombinations(curr, size):
-    if size == m:
-        combinations.append(curr)
-        return
-    newCurr = curr + [size]
-    generateAgentCombinations(curr, size + 1)
-    generateAgentCombinations(newCurr, size + 1)
-    return
+class Node:
+    def __init__(self):
+        self.tasks = [[] for i in range(m)]
+        self.avoidlist = [[] for i in range(m)]
+        self.g = [0 for i in range(m)]
+        self.h = [0 for i in range(m)]
+        self.F = 0
+        self.paths = []
+        self.collision = None
+    def equals(self, other):
+        return self.tasks == other.tasks and self.avoidlist == other.avoidlist
 
-generateAgentCombinations([], 0)
-combinations.pop(0)
-
-def reset(arr):
-    R, C = len(arr), len(arr[0])
-    for i in range(R):
-        for j in range(C):
-            arr[i][j] = False
-    
-
-def combineMoves(robotPos, i, nextStates, transformations):
-    keys = list(transformations.keys())
-    if i == len(keys):
-        ## check for collisions and then push into nextStates
-        flag = True
-        duplicates = [p for p in robotPos if robotPos.count(p) > 1]
-        for p in duplicates:
-            if grid[p[0]][p[1]] != 2:
-                flag = False
-                break
-        if flag:
-            nextStates.append(robotPos)
-        return
-    index = keys[i]
-    for move in transformations[index]:
-        p = deepcopy(robotPos)
-        p[index] = move
-        combineMoves(p, i+1, nextStates, transformations)
-    return
-
-
-def transformState(robotPos, visited):
-    nextStates = []
-    for combination in combinations:
-        ## CHANGE THE CONFIGURATIONS ONLY OF THE ROBOTS IN THIS COMBINATION
-        transformations = dict()
-        for index in combination:
-            ## FIND ALL POSSIBLE MOVES FOR THIS ROBOT
-            moves = []
-            x, y = robotPos[index]
-            if x - 1 >= 0 and grid[x-1][y] != 0 and not visited[index][x-1][y]:
-                moves.append([x-1, y])
-            if x + 1 < M and grid[x+1][y] != 0 and not visited[index][x+1][y]:
-                moves.append([x+1, y])
-            if y - 1 >= 0 and grid[x][y-1] != 0 and not visited[index][x][y-1]:
-                moves.append([x, y-1])
-            if y + 1 < N and grid[x][y+1] != 0 and not visited[index][x][y+1]:
-                moves.append([x, y+1])
-            transformations[index] = moves
-        combineMoves(robotPos, 0, nextStates, transformations)
-    return nextStates
-
-
-        
-def assignTasks(taskArray, taskAllotments, index, allotment, allotted):
-    if index == len(taskArray):
-        if len(allotment) > 0:
-            taskAllotments.append(allotment)
-        return
-    if len(taskArray[index]) == 0:
-        assignTasks(taskArray, taskAllotments, index + 1, allotment, allotted)
+def expand(s):
+    # EXPANDS A NODE ACCORDING TO STATE TRANSFORMATION RULES
+    children = []
+    assignedTasks = [task for tasks in s.tasks for task in tasks]
+    if s.collision:
+        i, j, x, y, t = s.collision
+        curr = Node()
+        curr.tasks = deepcopy(s.tasks)
+        curr.avoidlist[i].append((x, y, t))
+        children.append(curr)
+        curr = Node()
+        curr.tasks = deepcopy(s.tasks)
+        curr.avoidlist[j].append((x, y, t))
+        children.append(curr)
     else:
-        for task in taskArray[index]:
-            if not allotted[task]:
-                a = deepcopy(allotment)
-                b = deepcopy(allotted)
-                b[task] = True
-                a.append([index, task])
-                assignTasks(taskArray, taskAllotments, index + 1, a, b)
-    return
-    
-        
+        for task in range(n):
+            if task not in assignedTasks:
+                for agent in range(m):
+                    curr = Node()
+                    curr.tasks = deepcopy(s.tasks)
+                    curr.tasks[agent].append(task)
+                    children.append(curr)       
+    return children
 
-def search(q):
-    ### ITERATIVE BFS OVER SEARCH SPACE TREE
-    while len(q) > 0:
-        curr = q.pop(0)
-        robotPos = curr["robotPos"]
-        prodStat = curr["prodStat"]
-        robotStat = curr["robotStat"]
-        assignment = curr["assignment"]
-        visited = curr['visited']
+def checkGoal(s):
+    # CHECKS IF GOAL NODE IS REACHED
+    if s.collision:
+        return False
+    assignedTasks = [task for tasks in s.tasks for task in tasks]
+    if len(assignedTasks) != n:
+        return False
+    return True
+
+def distance(src, dest):
+    # CHECKS CACHE FOR DISTANCE
+    # CALCULATES A HEURISTIC ESTIMATE OF DISTANCE FROM SOURCE TO DESTINATION
+    # USING MANHATTAN DISTANCE
+    c = len(cache[N*src[0] + src[1]][N*dest[0] + dest[1]])
+    if c == 0:
+        return abs(src[0] - dest[0]) + abs(src[1] - dest[1])
+    else:
+        return c
+
+def heuristics(s):
+    heuristics = [0 for i in range(m)]
+    assignedTasks = [task for tasks in s.tasks for task in tasks]
+    tasks = deepcopy(s.tasks)
     
-        ## check if goal state  E and 
-        if robotPos == E: #and prodStat == finalProdStat:
-            return assignment
+    for task in range(n):
+        if task not in assignedTasks:
+            # ASSIGN TASK TO CLOSEST AGENT
+            closestAgent = 0
+            closestDistance = INT_MAX
+            for agent in range(m):
+                if len(tasks[agent]) > 0:
+                    d = distance(D[tasks[agent][-1]], P[task])
+                    if d < closestDistance:
+                        closestDistance = d
+                        closestAgent = agent
+            # UPDATE THE HEURISTICS FOR EACH AGENT
+            tasks[closestAgent].append(task)
+            heuristics[closestAgent] += distance(D[s.tasks[closestAgent][-1]], P[task]) + distance(P[task], D[task])
     
-        nextStates = transformState(robotPos, visited)
-        print(prodStat, robotPos)
+    for agent in range(m):
+        if len(tasks[agent]) > 0:
+            heuristics[agent] += distance(D[tasks[agent][-1]], E[agent])
+    
+    return heuristics
+
+
+def planPath(src, tasks, avoidList):
+    # PLANS PATH FOR SINGLE AGENT
+    path = []
+    if len(tasks) == 0:
+        return path
+    last = src
+    for task in tasks:
+        # CACHE CANNOT BE USED SINCE PATHS ARE PLANNED ACCORDING TO AVOID LISTS
+        # PLAN LAST TO PICKUP
+        subpath = astar.findBestPath(last, P[task], avoidList, len(path))
+        path += subpath[:-1]
         
-        for nextRobotPos in nextStates:
-            ps = deepcopy(prodStat)
-            rs = deepcopy(robotStat)
-            ass = deepcopy(assignment)
-            v = deepcopy(visited)
-            
-            taskArray = [[] for i in range(m)]            
-            
-            for i in range(m):
-                pos = nextRobotPos[i]
-                v[i][pos[0]][pos[1]] = True
-                
-                ## DELIVERY
-                if rs[i] == 0:
-                    # if robot is occupied
-                    try:
-                        J = [j for j, p in enumerate(D) if p == pos and ps[j] == i]
-                        if len(J) > 0:
-                            j = J[0]
-                            reset(v[i])
-                            ps[j] = -2
-                            rs[i] = 1
-                    except:
-                        pass
-                
-                ## PICKUP
-                if rs[i] == 1:
-                    # if robot is free
-                    try:
-                        J = [j for j, p in enumerate(P) if p == pos and ps[j] == -1]
-                        if len(J) > 0:  
-                            rs[i] = 0
-                            reset(v[i])
-                        taskArray[i] = J
-                    except:
-                        pass
-                
-            allotment = []
-            allotted = [False for i in range(n)]
-            taskAllotments = []
-            assignTasks(taskArray, taskAllotments, 0, allotment, allotted)
-            
-            
-            if len(taskAllotments) > 0:
-                ## if there are possible task allotments branch further
-                for allotment in taskAllotments:
-                    ps_curr = deepcopy(ps)
-                    ass_curr = deepcopy(ass)
-                    for item in allotment:
-                        i, j = item
-                        ps_curr[j] = i
-                        if i in ass_curr:
-                            ass_curr[i].append(j)
-                        else:
-                            ass_curr[i] = [j]
-                    q.append({"robotPos": nextRobotPos, "prodStat": ps_curr, "robotStat": deepcopy(rs), "assignment": ass_curr, "visited": deepcopy(v)})
+        # PLAN PICKUP TO DELIVERY
+        subpath = astar.findBestPath(P[task], D[task], avoidList, len(path))
+        path += subpath[:-1]
+        
+        last = D[task]
+    path.append(last)
+    return path
+
+def planPaths(s):
+    # PLANS PATH FOR ALL AGENTS AND CHECKS FOR COLLISIONS
+    paths = [planPath(S[agent], s.tasks[agent], s.avoidlist[agent]) for agent in range(m)]
+    collision = None
+    for i in range(m):
+        for j in range(i+1, m):
+            path_i, path_j = paths[i], paths[j]
+            k = 1
+            while k < len(path_i) and k < len(path_j):
+                if path_i[k] == path_j[k] and grid[path_i[k][0]][path_i[k][1]] != 2 and path_i[k] not in S and path_i[k] not in E:
+                    collision = (i, j, path_i[k][0], path_i[k][1], k-1)
+                    break
+                k += 1
+    return paths, collision
+
+
+def search():
+    # SEARCHES THE TASK BASED CONFLICT TREE USING A*
+    start = Node()
+    
+    openset = set()
+    closedset = set()
+    current = start
+    openset.add(current)
+    
+    while len(openset) > 0:
+        current = min(openset, key=lambda o:o.F)
+        if checkGoal(current):
+            makespan = max([len(path) for path in current.paths])
+            return current.tasks, makespan
+        
+        openset.remove(current)
+        closedset.add(current)
+        
+        for node in expand(current):
+            node.paths, node.collision = planPaths(node)
+            if node in closedset or node in openset:
+                pass
             else:
-                ## if there are no possible task allotments no further branching
-                q.append({"robotPos": nextRobotPos, "prodStat": ps, "robotStat": rs, "assignment": ass, "visited": v})
-    return "queue exhausted"
-
-
-initialState = {"robotPos": S, "prodStat": [-1 for i in range(m)], "robotStat": [1 for i in range(n)], "assignment": dict(), "visited": visitedArrays}
-q = [initialState]
-assignment = search(q)
-if assignment == -1:
-    print("no solution")
-else:
-    print(assignment)
+                node.h = heuristics(node)
+                node.g = [len(path) - 1 for path in node.paths]
+                node.F = max([node.h[i] + node.g[i] for i in range(m)])
+                openset.add(node)
     
+    
+tasks, makespan = search()
+print(tasks)
+print(makespan)
+        
+astar.findBestPath([0, 0], [0, 6], [(0, 3, 2),], 0)
+
+
+
+
+
+
+
+
+

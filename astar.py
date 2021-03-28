@@ -137,8 +137,11 @@ class AStar:
                 collisions.append(i)
         if len(avoidPath) > len(normalPath) + len(collisions):
             # WAITING IS A BETTER OPTION
+            j = 0
             for i in collisions:
-                normalPath = normalPath[:i] + [normalPath[i-1]] + normalPath[i:]
+                index = i + j
+                normalPath = normalPath[:index] + [normalPath[index-1]] + normalPath[index:]
+                j += 1
             return normalPath
         else:
             # CIRCUMVENTING IS A BETTER OPTION
