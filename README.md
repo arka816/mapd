@@ -4,7 +4,8 @@ The question in the assignment revolves around Multi Agent path Finding with pic
 
 The .py files **mapd_heuristic.py** and **mapd_optimal.py** provide the heuristic and optimal solutions respectively. 
 ## Report on Algortihms used:
-    https://docs.google.com/document/d/14r8AXbVs1SHOrMopPbe-pKh_FN708UK09jULb0xKqFQ/edit?usp=sharing
+The adjoining report on the assignment can be found 
+    [here](https://docs.google.com/document/d/14r8AXbVs1SHOrMopPbe-pKh_FN708UK09jULb0xKqFQ/edit?usp=sharing).
 ## Execution and test files
 The file can be executed in the terminal as:
 **python file_name.py test_filename.task**
@@ -43,3 +44,24 @@ It is advised to provide the complete address of the task file in the terminal d
     Agent 2 : [1]
     
   Here the output reports the approximate make-span and the optimal allocation for each of the agents as a list of tasks.
+# Results
+For the task given in **demo.task** file, we got the following outputs:
+## Heuristic:
+    approximate makespan:  26
+    optimal allocation: 
+    Agent 0 : [0]
+    Agent 1 : [2]
+    Agent 2 : [1]
+## Optimal:
+    makespan of optimal allocation:  28
+    optimal allocation: 
+    Agent 0 : [2]
+    Agent 1 : [1]
+    Agent 2 : [0]
+
+## Time for completion:
+- **Heuristic:** 9.5367431640625e-07 seconds
+
+- **Optimal:** 1.1920928955078125e-06 seconds
+
+Both have been tested on the same machine with the same test file (**demo.task**).
