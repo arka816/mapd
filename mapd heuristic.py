@@ -20,8 +20,8 @@ agentsData = [
     ]
 taskData = [
         [[5, 0], [3, 12]],
-        [[4, 6], [0, 6]],
-        [[5, 0], [0, 6]]
+        [[4, 6], [0, 5]],
+        [[5, 0], [0, 5]]
     ]
 grid = [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1],
@@ -89,7 +89,7 @@ def buildGraph():
                 adjMat[i][j] = cellDistance(vertexData[i][0], vertexData[i][1]) + cellDistance(vertexData[i][1], vertexData[j][0])
             elif u == 1 and v == 0:
                 # U = TASK AND V = AGENT
-                adjMat[i][j] = cellDistance(vertexData[i][0], vertexData[i][1]) + cellDistance(vertexData[i][1], vertexData[j][1])
+                adjMat[i][j] = cellDistance(vertexData[i][0], vertexData[i][1])
             else:
                 # U = AGENT AND v = AGENT
                 pass
@@ -125,13 +125,18 @@ def getMakespan(cycle):
     cycle = cycle[a:] + cycle[:a]
     t = 0
     
+    agent = 0
+    
     for i in range(len(cycle) - 1):
         t += adjMat[cycle[i]][cycle[i+1]]
         if vertexType[cycle[i + 1]] == 0:
             ## next item is an agent
+            home = cellDistance(vertexData[cycle[i]][1], vertexData[agent][1])
+            t += home
             m = max(m, t)
             t = 0
-    t += adjMat[cycle[-1]][cycle[0]]
+            agent = cycle[i+1]
+    t += adjMat[cycle[-1]][cycle[0]] + cellDistance(vertexData[cycle[-1]][1], vertexData[agent][1])
     m = max(m, t)
     return m
     
@@ -165,5 +170,5 @@ for i in range(len(cycles)):
         minSpan = span
         index = i
         
-print("approximate makespoan: ", minSpan)
+print("approximate makespan: ", minSpan)
 print("schedule", getSchedule(cycles[index]))
