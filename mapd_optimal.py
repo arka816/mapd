@@ -143,6 +143,8 @@ def planPaths(s):
                 k += 1
     return paths, collision
 
+      
+
 
 def search():
     # SEARCHES THE TASK BASED CONFLICT TREE USING A*
@@ -156,8 +158,10 @@ def search():
     while len(openset) > 0:
         current = min(openset, key=lambda o:o.F)
         if checkGoal(current):
-            makespan = max([len(path) for path in current.paths])
-            return current.tasks, makespan
+            homepaths = planHome(current)
+            finalpaths = [current.paths[i][:-1] + homepaths[i] for i in range(m)]
+            makespan = max([len(path) - 1 for path in finalpaths])
+            return current.tasks, makespan, finalpaths
         
         openset.remove(current)
         closedset.add(current)
@@ -173,17 +177,66 @@ def search():
                 openset.add(node)
     
     
-tasks, makespan = search()
-print(tasks)
-print(makespan)
+class HomeNode:
+    def __init__(self):
+        self.avoidlist = [[] for i in range(m)]
+        self.paths = []
+        self.collision = None
+    
+def planHomePaths(s, avoidlist, offset):
+    # PLANS PATH FOR HOME AND CHECKS FOR COLLISIONS
+    homepaths = [astar.findBestPath(s.paths[agent][-1], E[agent], avoidlist[agent], offset) for agent in range(m)]
+    finalpaths = [s.paths[agent][:-1] + homepaths[agent] for agent in range(m)]
+    collision = None
+    for i in range(m):
+        for j in range(i+1, m):
+            path_i, path_j = finalpaths[i], finalpaths[j]
+            k = 1
+            while k < len(path_i) and k < len(path_j):
+                if path_i[k] == path_j[k] and grid[path_i[k][0]][path_i[k][1]] != 2 and path_i[k] not in S and path_i[k] not in E:
+                    collision = (i, j, path_i[k][0], path_i[k][1], k-1)
+                    break
+                k += 1
+                
+    return homepaths, collision
+    
+
+def planHome(s):
+    # PLANS HOME JOURNEY FOR ALL ROBOTS
+    # USING BFS ON CONFLICT TREE
+    root = HomeNode()
+    root.paths, root.collision = planHomePaths(s, root.avoidlist, 0)
+    queue = [root]
+    
+    while len(queue) > 0:
+        top = queue.pop(0)
         
-astar.findBestPath([0, 0], [0, 6], [(0, 3, 2),], 0)
-
-
-
-
-
-
-
-
-
+        if not top.collision:
+            return top.paths
+        
+        i, j, x, y, t = top.collision
+        
+        if t >= len(s.paths[i]) - 1:
+            left = HomeNode()
+            left.avoidlist[i].append((x, y, t))
+            left.paths, left.collision = planHomePaths(s, left.avoidlist, len(s.paths[i]) - 1)
+            queue.append(left)
+        
+        if t >= len(s.paths[j]) - 1:
+            right = HomeNode()
+            right.avoidlist[i].append((x, y, t))
+            right.paths, right.collision = planHomePaths(s, right.avoidlist, len(s.paths[j]) - 1)
+            queue.append(right)
+        
+        
+    
+    
+tasks, makespan, finalpaths = search()
+print("makespan of optimal allocation: ", makespan)
+print("optimal allocation: ")
+for i in range(m):
+    schedule = tasks[i]
+    print("Agent", i, ':', schedule)
+for path in finalpaths:
+    #print(path)
+    pass
