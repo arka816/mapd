@@ -24,3 +24,6 @@ It is advised to provide the complete address of the task file in the terminal d
     5 0 3 12
     4 6 0 5
     5 0 0 5
+
+ - The first line inputs the dimensions of the grid, where 6 is the number of rows and 17 is the number of columns.
+- The next 6 lines contain 17 space separated integers each, providing the details of the grid where 1 signifies **normal cells**, 2 signifies **temporary storages** and 0 signifies **blocked cells** or obstacles.
